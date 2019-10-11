@@ -1,0 +1,18 @@
+USMISC2016-AEILA
+9/7/2016
+--------------------------------
+
+*	Variables deleted for confidentiality purposes: fips.
+
+*	74 variables and 1202 cases written.
+
+*	SPSS Portable abbreviated variable names, below:
+
+
+Abbreviated  Extended 
+Name         Name 
+ 
+birth_hi     birth_hisp 
+hphoneus     hphoneuse 
+iphoneus     iphoneuse
+		
