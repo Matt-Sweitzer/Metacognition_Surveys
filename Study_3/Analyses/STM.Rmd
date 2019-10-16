@@ -13,10 +13,7 @@ output:
     toc: true
     toc_depth: 3
     theme: yeti
-    css: style.css
 ---
-
-<div class="watermark">DRAFT</div>
 
 # About this document
 
