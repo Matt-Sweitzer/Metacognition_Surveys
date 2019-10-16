@@ -9,13 +9,10 @@ author:
   name: Hillary C. Shulman
 date: "`r format(Sys.time(), '%B %e, %Y')`"
 output:
-  html_document:
+  html_notebook:
     theme: yeti
     toc: yes
     toc_depth: 3
-  pdf_document:
-    toc: yes
-    toc_depth: '3'
 ---
 
 # About this document
@@ -102,20 +99,12 @@ Finally, some in the natural language processing realm advocate for a process ca
 
 Great! Now that the corpus is cleaned, we can take a look at the wordcloud:
 
-```{r fig1, echo=F, fig.width=8, fig.height=8, fig.align = "center", out.width="100%"}
+```{r fig.align='center', fig.width=8, fig.height=8}
   par(mar=c(0,0,0,0))
-  wordcloud(questionCorp, max.words=500, random.order=FALSE)
+  wordcloud(questionCorp, max.words=1000, random.order=FALSE)
 ```
 
 Clearly, the two lead candidate in the 2016 presidential election, Hillary Clinton and Donald Trump, were both asked about often in surveys leading up to that election. To plot this for yourself (and save the output), use the code below. Additional plotting commands are available, see `?wordcloud` for more information.
-
-```{r eval=F}
-#plot#
-pdf(file="wordcloud.pdf", width=6.5, height=6.5)
-par(mar=c(0,0,0,0))
-wordcloud(questionCorp, max.words=500, random.order=FALSE)
-dev.off()
-```
 
 ## *k*-values, search *k*, and diagnostic plots
 
