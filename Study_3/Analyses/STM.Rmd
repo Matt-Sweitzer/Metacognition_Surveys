@@ -10,9 +10,9 @@ author:
 date: "`r format(Sys.time(), '%B %e, %Y')`"
 output:
   html_notebook:
-    theme: yeti
-    toc: yes
-    toc_depth: 3
+#    theme: yeti
+#    toc: yes
+#    toc_depth: 3
 ---
 
 # About this document
