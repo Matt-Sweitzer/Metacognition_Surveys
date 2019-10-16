@@ -49,12 +49,76 @@ sessionInfo()
 
 ## Read in and clean the data
 
+The data for this study is available from my GitHub page.
+
+```{r}
+data<-read.csv(url("https://raw.githubusercontent.com/Matt-Sweitzer/Metacognition_Surveys/master/Study_3/Data/2016PollsFinal.csv"))
+```
+
+Let's take a look at the head of the data frame:
+
+```{r echo=F, results='asis'}
+library(knitr)
+kable(head(data))
+```
+
+These variables can be interpreted as follows:
+
+* `Date`: character, the date the results were published, or last date of data collection if publication date was not available
+* `Poll`: character, the polling firm either responsible for data collection or the sponsor of third-party data collection
+* `QuestionNum`: numeric, indicates the order of questions *within* the same ballot
+* `QuestionWord`: character, wording of the question from the survey instrument
+  + *Note*: we manually removed instructions to the surveyor (e.g., pronunciations, response ordering, etc.)
+* `Region`: character, geographic region of survey sample
+* `N`: numeric, total sample size
+  + *Note*: some polling firms ask some questions of only some of their respondents (e.g., answered a prior question in a certain way). We opted to encode only the *total* sample size for every question on the same survey, as subsample sizes were not uniformly reported.
+* `SurveyMethod`: character (factor), method of data collection -- options include "`online`", "`phone`", and "`phone/internet`"
+* `Likely.vs.All`: character (factor), class of respondents targeted in sample -- options include "`All`", "`Likely`", and "`Registered`".
+* `Ease`: numeric, Flesch reading ease score of `QuestionWord` -- calculated using the `koRpus` package in R
+* `Grade`: numeric, Flesch-Kincaid grade level of `QuestionWord` -- calculated using the `koRpus` package in R
+* `National`: numeric (factor), dummy variable collapsing `Region` -- 1 == "US", else 0
+* `Geo`: character (factor), alternative collapsing of `Region` -- options include "`Community`", "`National`", and "`State`"
+* `SurveyNum`: numeric (factor), indicates which survey instrument each question comes from -- should be identical to `Date`-`Poll` combination
+* `Topic`: numeric, stm topic to which the question had the highest fit, $\theta$ -- this is what we will be estimating here!
+
+Now, let's begin cleaning up the text corpus to make a basic corpus descriptive figure: a wordcloud. First, let's take the vector and change it to a corpus class:
+
+```{r}
+questionCorp<-Corpus(VectorSource(data$QuestionWord))
+```
+
+Next, lets start cleaning up some of the text. Wordclouds typically don't have puntucation listed. Also, we might expect that the most popular words in the English language, articles such as "the" or "a", would also be popular in our corpus -- showing them in this figure may not be very informative, so let's remove those too.
+
+```{r warning=F}
+questionCorp<-tm_map(questionCorp, removePunctuation)
+questionCorp<-tm_map(questionCorp, removeWords, stopwords('english'))
+```
+
+Finally, some in the natural language processing realm advocate for a process called "stemming". This takes similar words and removes the suffixes which differentiate them so they can be treated as referring to the same thing. For example, "communicate", "communication", and "communicating" would all become "communicat". This can be somewhat helpful when those slight differentiations create excess noise in the data, or make for an especially sparse term-document matrix. Some of these stemming algorithms are not particularly robust -- your mileage may vary. I will not stem them here, but if you would like to stem your own corpus, uncomment the following line of code:
+
+```{r}
+#questionCorp<-tm_map(questionCorp, stemDocument)
+```
+
+Great! Now that the corpus is cleaned, we can take a look at the wordcloud:
+
+```{r fig1, echo=F, fig.width=8, fig.height=8, fig.align = "center", out.width="100%"}
+  par(mar=c(0,0,0,0))
+  wordcloud(questionCorp, max.words=500, random.order=FALSE)
+```
+
+Clearly, the two lead candidate in the 2016 presidential election, Hillary Clinton and Donald Trump, were both asked about often in surveys leading up to that election. To plot this for yourself (and save the output), use the code below. Additional plotting commands are available, see `?wordcloud` for more information.
+
+```{r eval=F}
+#plot#
+pdf(file="wordcloud.pdf", width=6.5, height=6.5)
+par(mar=c(0,0,0,0))
+wordcloud(questionCorp, max.words=500, random.order=FALSE)
+dev.off()
+```
+
 ## *k*-values, search *k*, and diagnostic plots
 
 ## Running the STM
-
-### Parallel processing
-
-### Single-core processing
 
 ## Interpreting and exporting results
