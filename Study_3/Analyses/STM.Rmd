@@ -1,0 +1,60 @@
+---
+title: "\nThe Effects of Metacognition in Survey Research -- Study 3 (Structural Topic Model)"
+author:
+  - name: Matthew D. Sweitzer
+    affiliation: Ohio State University, School of Communication
+    email: mattsweitzer@gmail.com
+  - name: Hillary C. Shulman
+    affiliation: Ohio State University, School of Communication
+    
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    theme: yeti
+    css: style.css
+---
+
+<div class="watermark">DRAFT</div>
+
+# About this document
+
+## Project description
+
+This document is intended both as an open-source record of analyses conducted for one study in our paper entitled ["The Effects of Metacognition in Survey Research: Experimental, Cross-Sectional, and Content-Analytic Evidence"](https://github.com/Matt-Sweitzer/Papers/blob/master/SweitzerShulman2018.pdf), which was published recently in Public Opinion Quarterly, and as an introductory tutorial to Stuctural Topic Modeling (STM). If used for this latter purpose, this document is offered under the same license that governs the dataset used herein (available [here](https://github.com/Matt-Sweitzer/Metacognition_Surveys/blob/master/LICENSE)). Chiefly, this document is provided "AS IS", without warranty of any kind, express or implied. That said, if you encounter any issues, please feel free to email the first author using the link at the top of this document.
+
+STMs are described in some detail in the paper. Additional resources are available [here](http://www.structuraltopicmodel.com/) and [here](http://scholar.harvard.edu/files/dtingley/files/topicmodelsopenendedexperiments.pdf). Briefly, STMs are a form of unsupervised machine learning used to categorize a corpus of text documents. What differentiates STMs from a "bag of words" or latent Dirichlet allocation approach is the ability to specify document metadata as covariates in the model.
+
+We encourage you to read the paper linked above. A quick synopsis is required to understand the project we undertook. We are interested in whether the language complexity used in public opinion polling differentially affects metacognitive processes, and thus methodologically-pertinent outcomes such as "don't know" reporting, or abstaining from self-reporting. In study 1, we conducted a survey-experiment among a nationally-representative sample of U.S. adults. Participants were randomly assigned to either an "easy"- or "difficult"-language condition in which we varied the objective complexity of the language used to convey the public opinion questions. In study 2, we collected survey instruments from the Roper Center's database of public opinion polls (data and analyses coming soon; keep an eye on this website: [https://github.com/Matt-Sweitzer/](https://github.com/Matt-Sweitzer/)). Using top-line results, we compared question difficulty to rates of "don't know" reporting. Having found significant results for both studies, we turned our attention to the public opinion polling industry more broadly to see if language complexity varied systematically -- suggesting that the methodological problem posed by complex language may be widespread and unconsidered. One of the ways we looked for systematic variance in question complexity is by using a STM to categorize the questions into topics. Given that we had such a large dataset for this latter study, using a computational approach to code topics made this component of our analyses much more feasible.
+
+## Session information from the most recent compiling
+
+Before we begin, here is the most up-to-date information about the R session used to generate this file. To run this yourself, you will need to install the R packages `stm`, `stringr`, `tm`, `wordcloud`, and `SnowballC`. The latter two packages are only required to plot the wordcloud below and can be skipped for the topic model.
+
+```{r echo=F, message=F}
+library(SnowballC)
+library(stm)
+library(stringr)
+library(tm)
+library(wordcloud)
+```
+
+```{r echo=F}
+format(Sys.time(), "%A %B %e, %Y - %I:%M:%S %p %Z")
+sessionInfo()
+```
+
+# Analyses
+
+## Read in and clean the data
+
+## *k*-values, search *k*, and diagnostic plots
+
+## Running the STM
+
+### Parallel processing
+
+### Single-core processing
+
+## Interpreting and exporting results
