@@ -10,6 +10,8 @@ author:
 date: "`r format(Sys.time(), '%B %e, %Y')`"
 output:
   html_notebook:
+    code_folding: none
+#    self_contained: FALSE
 #    theme: yeti
 #    toc: yes
 #    toc_depth: 3
@@ -99,10 +101,11 @@ Finally, some in the natural language processing realm advocate for a process ca
 
 Great! Now that the corpus is cleaned, we can take a look at the wordcloud:
 
-```{r fig.align='center', fig.width=8, fig.height=8}
+```{r eval=F, fig.align='center', fig.width=8, fig.height=8}
   par(mar=c(0,0,0,0))
   wordcloud(questionCorp, max.words=1000, random.order=FALSE)
 ```
+![](https://github.com/Matt-Sweitzer/Metacognition_Surveys/raw/master/Study_3/Analyses/wordcloud.png)
 
 Clearly, the two lead candidate in the 2016 presidential election, Hillary Clinton and Donald Trump, were both asked about often in surveys leading up to that election. To plot this for yourself (and save the output), use the code below. Additional plotting commands are available, see `?wordcloud` for more information.
 
