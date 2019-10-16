@@ -1,18 +1,21 @@
 ---
-title: "\nThe Effects of Metacognition in Survey Research -- Study 3 (Structural Topic Model)"
+title: |2-
+  The Effects of Metacognition in Survey Research -- Study 3 (Structural Topic Model)
 author:
-  - name: Matthew D. Sweitzer
-    affiliation: Ohio State University, School of Communication
-    email: mattsweitzer@gmail.com
-  - name: Hillary C. Shulman
-    affiliation: Ohio State University, School of Communication
-    
+- affiliation: Ohio State University, School of Communication
+  email: mattsweitzer@gmail.com
+  name: Matthew D. Sweitzer
+- affiliation: Ohio State University, School of Communication
+  name: Hillary C. Shulman
 date: "`r format(Sys.time(), '%B %e, %Y')`"
 output:
   html_document:
-    toc: true
-    toc_depth: 3
     theme: yeti
+    toc: yes
+    toc_depth: 3
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
 ---
 
 # About this document
