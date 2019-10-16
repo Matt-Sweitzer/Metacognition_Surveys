@@ -12,7 +12,7 @@ output:
   html_notebook:
     code_folding: none
 #    self_contained: FALSE
-#    theme: yeti
+    theme: yeti
 #    toc: yes
 #    toc_depth: 3
 ---
@@ -101,16 +101,129 @@ Finally, some in the natural language processing realm advocate for a process ca
 
 Great! Now that the corpus is cleaned, we can take a look at the wordcloud:
 
-```{r eval=F, fig.align='center', fig.width=8, fig.height=8}
+```{r fig.height=12, fig.width=12}
   par(mar=c(0,0,0,0))
-  wordcloud(questionCorp, max.words=1000, random.order=FALSE)
+  wordcloud(questionCorp, scale=c(6,0.65), max.words=1000, random.order=FALSE)
 ```
-![](https://github.com/Matt-Sweitzer/Metacognition_Surveys/raw/master/Study_3/Analyses/wordcloud.png)
 
 Clearly, the two lead candidate in the 2016 presidential election, Hillary Clinton and Donald Trump, were both asked about often in surveys leading up to that election. To plot this for yourself (and save the output), use the code below. Additional plotting commands are available, see `?wordcloud` for more information.
 
 ## *k*-values, search *k*, and diagnostic plots
 
+One key component of a STM specification is a *k*-value. *k* is the number of topics that you would like the algorithm to split the corpus into. There are two possible procedures to specifying a *k*-value: the first is to conduct a procedure called a search *k*, and the second is to use a spectral initialization in the model and allow it to select a *k* for you using a procedure created by Lee and Mimno (2014). The latter is non-deterministic, so the former is preferred when possible. Search *k* essentially performs the initial splitting procedure of a STM across many different *k* values, the output of which is a number of model fit statistics that the researcher can use to determine the appropriate *k* to specify for the final model.
+
+To run a search *k*, we first need to subset our document metadata into a separate dataframe which can more easily be fed into the function. For this test, we'll use `Date`, `Poll`, `N`, `Geo`, and `SurveyNum`. Let's first change `Date` to a numeric variable indicating the day in 2016 so that the model will treat this continuously and not categorically; and `SurveyNum` should be treated categorically.
+
+```{r}
+data$Date_num<-as.Date(data$Date, format="%m/%d/%y")-as.Date("2016-01-01")
+data$SurveyNum<-as.factor(data$SurveyNum)
+metaData<-cbind(data$Date_num, data$Poll, data$N, data$Geo, data$SurveyNum)
+```
+
+The search *k* procedure requires cleaned documents that are linked with their corresponding metadata. The `stm` package includes a function called `textProcessor` which accomplishes this. It's essentially a wrapper function for several of the functions from the `tm` package used above to clean the text for the wordcloud. The researcher can specify which processes they would like to be performed on the dataset. See `?textProcessor` for more information.
+
+Let's just use the default processes on this dataset for this example:
+
+```{r}
+questionsPro<-textProcessor(data$QuestionWord, metadata=metaData)
+```
+
+The last cleaning procedure the search *k* requires is provided by the function `prepDocuments`. This does a handful of things, including dropping words which appear in only one document, correcting word indices, and generating the document-term matrix. The only default I changed for this project is to set the lower threshold to 0 to retain all words, even if they only appear in one document. Doing so, I found, made the FREX words more interpretable. Use at your own discretion.
+
+```{r}
+questionsOut<-prepDocuments(questionsPro$documents, questionsPro$vocab, questionsPro$meta, lower.thresh=0)
+```
+
+To run a search *k*, we need to provide the function `searchK` with a number of arguments. See `?searchK` for all available options.
+
+`documents`, `vocab`, and `data` will all be provided by our saved output from the `prepDocuments` function. `K` expects the values you would like the search *k* to test. Here, for the sake of time and because I've already run a larger process, we'll just provide the values 2 through 20. In practice, you would likely want to sweep a much wider array of values (e.g., 2 through 100). `heldout.seed` will make the results reproducable if you run the search *k* again. And finally, `cores` is how to unlock more processing power on your computer to help this process run much more quickly. I am running this on a UNIX machine (Mac) with 16 processing threads, so the output of `parallel::detectCores()-1` will yeild `15` for me (the "-1" allows you to do other things on your computer while you wait). This may be different on your own machine. I am not certain if parallel processing will work on Windows computers, so those users may have to remove the `cores` argument from this function call.
+
+```{r message=F, warning=F}
+kresult<-searchK(questionsOut$documents, questionsOut$vocab, data=questionsOut$meta, K=c(2:20), heldout.seed=68246, cores=parallel::detectCores()-1)
+```
+
+Once that's finished, we only need to plot the results to determine the number of topics. You can use the format "`plot(results)`", but for whatever reason, the package authors decided to leave out one of their most important metrics of topic fit: exclusivity. We can reconstruct the this default plotting, substituting held-out likelihood with exclusivity, using the following syntax:
+
+```{r fig.height=12, fig.width=12}
+par(mfrow=c(2,2))
+plot(2:20, kresult$results$exclus, type='b', pch=19, xlab='K', ylab='Exclusivity')
+plot(2:20, kresult$results$residual, type='b', pch=19, xlab='K', ylab='Residuals')
+plot(2:20, kresult$results$semcoh, type='b', pch=19, xlab='K', ylab='Semantic Coherence')
+plot(2:20, kresult$results$lbound, type='b', pch=19, xlab='K', ylab='Lower Bound')
+```
+
+These results can be interpreted as follows. For exclusivity, residuals, and lower bound, read these plots like you would a scree plot in exploratory factor analysis. That is, you are looking for a place along the "curve" where the line stops increasing superlinearly and begins either decreasing or increasing only sublinearly (some call this the "elbow" in the graph). Once you know about where that elbow occurs (for us, this appears to be between 5 and 8), you can then turn to the semantic coherence graph and look for a local maxima in the same region of *k* values. This appears to be 7 in our case, so 7 is the number of topics we will model in the STM.
+
+Often, we don't have such clear evidence from a search *k*. In that case, you have one of two options: try modeling a few values of *k* to see if interpretting the results (see below) is subjectively easier at any specific value, or you can set *k* to equal 0 and the initialization type to "spectral" to allow the model to pick.
+
 ## Running the STM
 
+Once we have a clear picture of how many topics to model, we just need to produce the final model and interpret the results. The `stm` function takes several arguments, see `?stm` for more information. Importantly, the function needs a seed to be reproducable. Other than that, we'll be fine with the defaults:
+
+```{r message=F, warning=F}
+stmresults<-stm(questionsOut$documents, questionsOut$vocab, data=questionsOut$meta, K=7, seed=68246, verbose = FALSE)
+```
+
 ## Interpreting and exporting results
+
+The first step in interpreting STM results is to look at the FREX words for each topic. FREX words are those words in the corpus which are *frequently* occuring within a group of documents, but which are also relatively *exclusive* to that group. A word like "the" might be frequently occuring but not exclusive. Conversely, a word like "valorem", as in a question asking about ad valorem taxes, might be very exclusive to a group, but not frequently occuring. Using FREX words, the researcher can subjectively interpret what each topic pertains to.
+
+We can extract FREX words using the `labelTopics` function and restrict the output to FREX:
+
+```{r}
+labelTopics(stmresults)$frex
+```
+
+The `stm` package includes a useful plotting function called `plotQuote` for these words if you would like to produce these results for a paper or presentation:
+
+```{r fig.height=4, fig.width=8}
+par(mfrow = c(1,7), mar = c(0.5, 1, 2, 1))
+plotQuote(labelTopics(stmresults)$frex[1,], width=25, main="Topic 1", cex.main=0.95, font.main=2)
+plotQuote(labelTopics(stmresults)$frex[2,], width=25, main="Topic 2", cex.main=0.95, font.main=2)
+plotQuote(labelTopics(stmresults)$frex[3,], width=25, main="Topic 3", cex.main=0.95, font.main=2)
+plotQuote(labelTopics(stmresults)$frex[4,], width=25, main="Topic 4", cex.main=0.95, font.main=2)
+plotQuote(labelTopics(stmresults)$frex[5,], width=25, main="Topic 5", cex.main=0.95, font.main=2)
+plotQuote(labelTopics(stmresults)$frex[6,], width=25, main="Topic 6", cex.main=0.95, font.main=2)
+plotQuote(labelTopics(stmresults)$frex[7,], width=25, main="Topic 7", cex.main=0.95, font.main=2)
+```
+
+We can pull example documents for each topic using the `findThoughts` function. This takes the fit scores for each topic, or $\theta$, which indicates what proportion of that document represents a given topic. It then orders the documents by fit score from highest to lowest, and then returns the top examples (number set by the researcher with the argument `n`). I use the substring function here to shorten the length of the examples for simplicity.
+
+```{r}
+findThoughts(stmresults, texts=substr(data$QuestionWord,1,200), n = 5, topics = 1)
+```
+
+Great! Let's take a look at the second topic:
+
+```{r}
+findThoughts(stmresults, texts=substr(data$QuestionWord,1,200), n = 5, topics = 2)
+```
+
+And the third...
+
+```{r}
+findThoughts(stmresults, texts=substr(data$QuestionWord,1,200), n = 5, topics = 3)
+```
+
+You get the idea. Finally, you may want to extract the topic fit values so that you can assign a topic to a document (i.e., highest fit), compare topic prevalences over time, etc. This will be stored in the results as a document-by-topic matrix. You can extract that using the syntax `$theta` after the results object. For example:
+
+```{r eval=F}
+head(stmresults$theta)
+```
+
+will produce these results:
+
+```{r echo=F}
+table<-cbind(c(1:6), head(stmresults$theta))
+colnames(table)<-c("Document", "Topic 1", "Topic 2", "Topic 3", "Topic 4", "Topic 5", "Topic 6", "Topic 7")
+kable(table)
+```
+
+Finally, let's look at one way you might use these model results in a meaningful analysis or description of the data set: topic prevalence over time. Recall, we created a variable `Date_num` in our dataframe which contains the numeric day of the year. We can fit a loess model predicting a topic fit by `Date_num` and plot the results to show this trend -- I chose topic 4 because that had the most visually interesting results:
+
+```{r fig.height=12, fig.width=12}
+par(mar=c(5, 5, 0, 0))
+plot(loess.smooth(data$Date_num, stmresults$theta[,4], evaluation=365), type='l', lwd=4, col='darkred', xlab='Day', ylab='Topic 4 Prevalence')
+```
+
+Additional analyses -- including replications of the analyses presented in the paper -- are forthcoming. In the meantime, please email [mattsweitzer@gmail.com](mailto:mattsweitzer@gmail.com) if you have any questions.
